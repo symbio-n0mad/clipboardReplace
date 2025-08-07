@@ -5,3 +5,5 @@ Prior to usage two textfiles need to be prepared, they have to contain search ph
 
 Expected filenames are SEARCH.txt and REPLACE.txt in the same directory (when running the script with the -standard flag). Alternative filenames may be provided as arguments to the script (-file1/-searchFile/-searchFilePath "FILENAME", -file2/-replaceFile/-replaceFilePath "FILENAME").
 For basic grep functionality call script like this: <scriptname>.ps1 -grep -searchText "searchString"
+
+Do you want the terminal to stay open, waiting for confirmation? Use the -persist (or -termOpen, -stay, -windowPersist, -confirm, -p) flag at calling-time.
