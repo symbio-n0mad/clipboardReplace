@@ -15,13 +15,13 @@ param (
     [string]$replaceText = "",
     [Alias("showHelp", "h", "hint", "usage")]          
     [switch]$Help = $false,
-    [Alias("toFile", "f", "save", "write")]          
+    [Alias("toFile", "f", "save", "write", "fileOut")]          
     [switch]$fileOutput = $false,
     [Alias("standard", "s", "normal", "n")]          
     [switch]$standardSettings,  
-    [Alias("regularExpressions", "RegEx", "advanced")]          
+    [Alias("regularExpressions", "RegEx", "advanced", "regExP")]          
     [switch]$r,  
-    [Alias("grep", "ext", "e", "x")]          
+    [Alias("grep", "ext", "e", "x", "extract")]          
     [switch]$extractMatch  
 )
 if ($standardSettings) {
@@ -53,19 +53,40 @@ if (
 # Read text from clipboard
 $clipboardText = Get-Clipboard
 
-# Read file contents explicitly as arrays
-$searchLines = @(Get-Content -Path $searchFilePath)
-$replaceLines = @(Get-Content -Path $replaceFilePath)
-
-while ($replaceLines.Count -lt $searchLines.Count) { 
-    $replaceLines += '' # because empty lines are not recognized as lines, array will be filled with empty entries here for every empty line
+# Read file contents explicitly as arrays, but only if they exist
+if (-not [string]::IsNullOrWhiteSpace($searchFilePath)) {
+    $searchLines = @(Get-Content -Path $searchFilePath)
+}
+if (-not [string]::IsNullOrWhiteSpace($searchText)) {
+    $searchLines += $searchText
 }
 
-if ($searchLines.Count -ne $replaceLines.Count) {
-    Write-Error "Error: Line count of provided files not equal."
-	Read-Host -Prompt "Press enter to end program!"
-    exit
+if (-not [string]::IsNullOrWhiteSpace($replaceFilePath)) {
+    $replaceLines = @(Get-Content -Path $replaceFilePath)
 }
+if (-not [string]::IsNullOrWhiteSpace($replaceText)) {
+    $replaceLines += $replaceText
+}
+
+if (-not $extractMatch) { # If only extraction is wanted then no check is needed
+    if ($searchLines.Count -ne $replaceLines.Count) {
+        Write-Error "Error: Line count of provided files not usable, check entries!"
+        Read-Host -Prompt "Press enter to end program"
+        exit
+    }
+}
+if (-not [string]::IsNullOrWhiteSpace($searchFilePath) -and
+    -not [string]::IsNullOrWhiteSpace($replaceFilePath)
+    ) {
+    while ($replaceLines.Count -lt $searchLines.Count) { 
+        $replaceLines += '' # because empty lines are not recognized as lines, array will be filled with empty entries here for every empty line
+    }
+}
+else {
+    $searchLines = @($searchText)
+}
+
+
 
 if ($extractMatch) {
     # Match extraction
@@ -78,7 +99,17 @@ if ($extractMatch) {
     $lines = $clipboardText -split "`r?`n"
 
     for ($j = 0; $j -lt $searchLines.Count; $j++) {
+
         $pattern = $searchLines[$j]
+        # Check, for content of $searchText
+        #newstuff
+        # if (-not [string]::IsNullOrWhiteSpace($searchText)) {
+        #     $pattern = $searchText
+        #     $j--
+        #     $searchText = ""
+        # }
+        #newstuff end
+
         # Iterate lines
         for ($i = 0; $i -lt $lines.Length; $i++) {
             $lineNumber = $i + 1
@@ -106,18 +137,19 @@ if ($extractMatch) {
 
 
 # Process line by line
-for ($i = 0; $i -lt $searchLines.Count; $i++) {
-    $searchText = $searchLines[$i]
-    $replaceText = $replaceLines[$i]
-    if ($replaceText -eq '') {
-        #$clipboardText = $clipboardText -replace [regex]::Escape($searchText), ''
-		$clipboardText = $clipboardText.Replace($searchText, '')
-    } else {
-        #$clipboardText = $clipboardText -replace [regex]::Escape($searchText), $replaceText
-		$clipboardText = $clipboardText.Replace($searchText, $replaceText)
+if ($replaceLines -ne $null -and $replaceLines.Count -gt 0) {  # Only runs if replaceLines-Array is existing and has content
+    for ($i = 0; $i -lt $searchLines.Count; $i++) {
+        $searchForText = $searchLines[$i]
+        $replaceText = $replaceLines[$i]
+        if ($replaceText -eq '') {
+            #$clipboardText = $clipboardText -replace [regex]::Escape($searchForText), ''
+            $clipboardText = $clipboardText.Replace($searchForText, '')
+        } else {
+            #$clipboardText = $clipboardText -replace [regex]::Escape($searchForText), $replaceText
+            $clipboardText = $clipboardText.Replace($searchForText, $replaceText)
+        }
     }
 }
-
 if ($fileOutput) { # This runs if output as file is desired
     # Timestamp generation
     $timeStamp = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -144,4 +176,4 @@ else {
 
 
 Write-Host 'Clipboard successfully modified.'
-#Read-Host -Prompt "Press enter to close this window!"
+Read-Host -Prompt "Press enter to close this window!"
