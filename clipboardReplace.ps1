@@ -21,6 +21,8 @@ param (
     [switch]$standardSettings,  
     [Alias("regularExpressions", "RegEx", "advanced", "regExP")]          
     [switch]$r,  
+    [Alias("termOpen", "stay", "windowPersist", "confirm", "p")]          
+    [switch]$persist,  
     [Alias("grep", "ext", "e", "x", "extract")]          
     [switch]$extractMatch  
 )
@@ -176,4 +178,6 @@ else {
 
 
 Write-Host 'Clipboard successfully modified.'
-Read-Host -Prompt "Press enter to close this window!"
+if ($persist) {
+    Read-Host -Prompt "Press enter to close this window!"
+}
