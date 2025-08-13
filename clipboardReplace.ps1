@@ -15,6 +15,8 @@ param (
     [string]$replaceText = "",
     [Alias("showHelp", "h", "hint", "usage")]          
     [switch]$Help = $false,
+    [Alias("caseInsensitive", "caseMattersNot", "ignoreCase", "ic")]          
+    [switch]$ci = $false,
     [Alias("toFile", "f", "save", "write", "fileOut")]          
     [switch]$fileOutput = $false,
     [Alias("standard", "s", "normal", "n")]          
@@ -22,7 +24,7 @@ param (
     [Alias("regularExpressions", "RegEx", "advanced", "regExP")]          
     [switch]$r,  
     [Alias("termOpen", "stay", "windowPersist", "confirm", "p")]          
-    [switch]$persist,  
+    [switch]$persist = $false,  
     [Alias("grep", "ext", "e", "x", "extract")]          
     [switch]$extractMatch  
 )
@@ -48,7 +50,8 @@ if (
     Write-Host ""
     Write-Host "or"
     Write-Host "  -standard           Load standard filenames"
-    Read-Host -Prompt "Press Enter to end program!"
+    Start-Sleep -Milliseconds 1750
+    # Read-Host -Prompt "Press Enter to end program!"
     exit
 }
 
@@ -139,16 +142,51 @@ if ($extractMatch) {
 
 
 # Process line by line
-if ($replaceLines -ne $null -and $replaceLines.Count -gt 0) {  # Only runs if replaceLines-Array is existing and has content
-    for ($i = 0; $i -lt $searchLines.Count; $i++) {
-        $searchForText = $searchLines[$i]
-        $replaceText = $replaceLines[$i]
-        if ($replaceText -eq '') {
-            #$clipboardText = $clipboardText -replace [regex]::Escape($searchForText), ''
-            $clipboardText = $clipboardText.Replace($searchForText, '')
-        } else {
-            #$clipboardText = $clipboardText -replace [regex]::Escape($searchForText), $replaceText
-            $clipboardText = $clipboardText.Replace($searchForText, $replaceText)
+if ($replaceLines -ne $null -and $replaceLines.Count -gt 0 -and $searchLines -ne $null -and $searchLines.Count -gt 0) {  # Only runs if search/replaceLines-Array is existing and has content
+    if ($r) {
+        for ($i = 0; $i -lt $searchLines.Count; $i++) {
+            $searchText = $searchLines[$i]
+            $replaceText = $replaceLines[$i]
+            if ($replaceText -eq '') {
+                # Lösche $searchText aus $clipboardText
+                if ($ci) {
+                    $clipboardText = $clipboardText -replace $searchText, ''
+                }
+                else {
+                    $clipboardText = $clipboardText -creplace $searchText, ''
+                }
+            } else {
+                if ($ci) {
+                    # Ersetze $searchText durch $replaceText
+                    $clipboardText = $clipboardText -replace $searchText, $replaceText
+                }
+                else {
+                    $clipboardText = $clipboardText -creplace $searchText, $replaceText
+                }
+            }
+}
+    }
+    else {
+        for ($i = 0; $i -lt $searchLines.Count; $i++) {
+            $searchForText = $searchLines[$i]
+            $replaceText = $replaceLines[$i]
+            if ($replaceText -eq '') {
+                # if ($ci) {
+                    #$clipboardText = $clipboardText -replace [regex]::Escape($searchForText), ''
+                    $clipboardText = $clipboardText.Replace($searchForText, '')
+                # }
+                # else {
+                    # #$clipboardText = $clipboardText.Replace($searchForText, '', [System.StringComparison]::Ordinal) # Not working, meethod is not overloaded
+                # }
+            } else {
+                # if ($ci) {
+                    #$clipboardText = $clipboardText -replace [regex]::Escape($searchForText), $replaceText
+                    $clipboardText = $clipboardText.Replace($searchForText, $replaceText)
+                # }
+                # else {
+                   #  #$clipboardText = $clipboardText.Replace($searchForText, $replaceText, [System.StringComparison]::Ordinal) # Not working, meethod is not overloaded
+                # }
+            }
         }
     }
 }
