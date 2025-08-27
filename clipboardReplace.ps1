@@ -47,10 +47,15 @@ if (
     Write-Host "  -searchFolderPath   Path to folder with search files"
     Write-Host "  -searchFilePath     File with lines to search for"
     Write-Host "  -searchText         Text to search for"
-    Write-Host ""
     Write-Host "or"
-    Write-Host "  -standard           Load standard filenames"
-    Start-Sleep -Milliseconds 1750
+    Write-Host "  -standard           Load the standard filenames SEARCH.txt and REPLACE.txt"
+    Write-Host ""
+    Write-Host "  -r / -RegEx         Permit use of Regular Expressions"
+    Write-Host "  -x / -grep          Search and extract patterns"
+    Write-Host ""
+
+    Write-Host "  -persist / -p       After running the script, terminal will wait for confirmation"
+    Start-Sleep -Milliseconds 1250
     # Read-Host -Prompt "Press Enter to end program!"
     exit
 }
@@ -91,7 +96,8 @@ else {
     $searchLines = @($searchText)
 }
 
-
+#You Search for a Search?
+#or just a search?
 
 if ($extractMatch) {
     # Match extraction
@@ -120,20 +126,40 @@ if ($extractMatch) {
             $lineNumber = $i + 1
             $line = $lines[$i]
 
-            if ($r) {
-                # Regex-search
-                foreach ($m in [regex]::Matches($line, $pattern)) {
-                    Write-Output "${lineNumber}: $($m.Value)"  # Match 
-                    Write-Output "${lineNumber}: $line"        # Full line
-                    Write-Output ""                            # empty line/CRLF
+            if ($ci) {
+                if ($r) {
+                    # Regex-search
+                    foreach ($m in [regex]::Matches($line, $pattern)) {
+                        Write-Output "${lineNumber}: $($m.Value)"  # Match 
+                        Write-Output "${lineNumber}: $line"        # Full line
+                        Write-Output ""                            # empty line/CRLF
+                    }
+                } else {
+                    # Literal search
+                    if ($line -like "*$pattern*") {
+                        Write-Output "${lineNumber}: $pattern"    # Match 
+                        Write-Output "${lineNumber}: $line"       # Full line
+                        Write-Output ""                           # CRLF
+                    }
                 }
-            } else {
-                # Literal search
-                if ($line -like "*$pattern*") {
-                    Write-Output "${lineNumber}: $pattern"    # Match 
-                    Write-Output "${lineNumber}: $line"       # Full line
-                    Write-Output ""                           # CRLF
+            }
+            else {
+                if ($r) {
+                    # Regex-search (case-sensitive)
+                    foreach ($m in [regex]::Matches($line, $pattern, [System.Text.RegularExpressions.RegexOptions]::None)) {
+                        Write-Output "${lineNumber}: $($m.Value)"  # Match 
+                        Write-Output "${lineNumber}: $line"        # Full line
+                        Write-Output ""                            # empty line/CRLF
+                    }
+                } else {
+                    # Literal search (case-sensitive)
+                    if ($line.Contains($pattern)) {
+                        Write-Output "${lineNumber}: $pattern"    # Match 
+                        Write-Output "${lineNumber}: $line"       # Full line
+                        Write-Output ""                           # CRLF
+                    }
                 }
+
             }
         }
     }
