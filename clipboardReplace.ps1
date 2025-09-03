@@ -197,21 +197,23 @@ if ($replaceLines -ne $null -and $replaceLines.Count -gt 0 -and $searchLines -ne
             $searchForText = $searchLines[$i]
             $replaceText = $replaceLines[$i]
             if ($replaceText -eq '') {
-                # if ($ci) {
-                    #$clipboardText = $clipboardText -replace [regex]::Escape($searchForText), ''
-                    $clipboardText = $clipboardText.Replace($searchForText, '')
-                # }
-                # else {
+                if ($ci) {
+                    $clipboardText = $clipboardText -replace [regex]::Escape($searchForText), ''
+                    #$clipboardText = $clipboardText.Replace($searchForText, '')
+                }
+                else {
                     # #$clipboardText = $clipboardText.Replace($searchForText, '', [System.StringComparison]::Ordinal) # Not working, meethod is not overloaded
-                # }
+                    $clipboardText = $clipboardText.Replace($searchForText, '')
+                }
             } else {
-                # if ($ci) {
-                    #$clipboardText = $clipboardText -replace [regex]::Escape($searchForText), $replaceText
-                    $clipboardText = $clipboardText.Replace($searchForText, $replaceText)
-                # }
-                # else {
+                if ($ci) {
+                    $clipboardText = $clipboardText -replace [regex]::Escape($searchForText), $replaceText
+                    #$clipboardText = $clipboardText.Replace($searchForText, $replaceText)
+                }
+                else {
                    #  #$clipboardText = $clipboardText.Replace($searchForText, $replaceText, [System.StringComparison]::Ordinal) # Not working, meethod is not overloaded
-                # }
+                   $clipboardText = $clipboardText.Replace($searchForText, $replaceText)
+                }
             }
         }
     }
