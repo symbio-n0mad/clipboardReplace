@@ -15,9 +15,9 @@ param (
     [string]$replaceText = "",
     [Alias("showHelp", "h", "hint", "usage")]          
     [switch]$Help = $false,
-    [Alias("caseInsensitive", "caseMattersNot", "ignoreCase", "ic")]          
+    [Alias("caseInsensitive", "caseMattersNot", "ignoreCase", "ic", "i")]          
     [switch]$ci = $false,
-    [Alias("toFile", "f", "save", "write", "fileOut")]          
+    [Alias("toFile", "f", "save", "write", "fileOut", "output", "out", "o")]          
     [switch]$fileOutput = $false,
     [Alias("standard", "s", "normal", "n")]          
     [switch]$standardSettings,  
@@ -28,6 +28,7 @@ param (
     [Alias("grep", "ext", "e", "x", "extract")]          
     [switch]$extractMatch  
 )
+# Also option for file input?
 if ($standardSettings) {
     Write-Host "Standard settings activated:"
     $searchFilePath = "SEARCH.txt"
@@ -62,6 +63,7 @@ if (
 
 # Read text from clipboard
 $clipboardText = Get-Clipboard
+$clipboardUnchanged = Get-Clipboard
 
 # Read file contents explicitly as arrays, but only if they exist
 if (-not [string]::IsNullOrWhiteSpace($searchFilePath)) {
@@ -168,13 +170,13 @@ if ($extractMatch) {
 
 
 # Process line by line
-if ($replaceLines -ne $null -and $replaceLines.Count -gt 0 -and $searchLines -ne $null -and $searchLines.Count -gt 0) {  # Only runs if search/replaceLines-Array is existing and has content
+if ($null -ne $replaceLines -and $replaceLines.Count -gt 0 -and $null -ne $searchLines -and $searchLines.Count -gt 0) {  # Only runs if search/replaceLines-Array is existing and has content
     if ($r) {
         for ($i = 0; $i -lt $searchLines.Count; $i++) {
             $searchText = $searchLines[$i]
             $replaceText = $replaceLines[$i]
             if ($replaceText -eq '') {
-                # Lösche $searchText aus $clipboardText
+                # Delete $searchText from $clipboardText
                 if ($ci) {
                     $clipboardText = $clipboardText -replace $searchText, ''
                 }
@@ -183,7 +185,7 @@ if ($replaceLines -ne $null -and $replaceLines.Count -gt 0 -and $searchLines -ne
                 }
             } else {
                 if ($ci) {
-                    # Ersetze $searchText durch $replaceText
+                    # Replace $searchText by $replaceText
                     $clipboardText = $clipboardText -replace $searchText, $replaceText
                 }
                 else {
@@ -240,10 +242,29 @@ if ($fileOutput) { # This runs if output as file is desired
 }
 else {
     Set-Clipboard -Value $clipboardText
+#'    $clipboardUnchanged = $clipboardUnchanged.ToString().TrimEnd("`r", "`n")
+#    $clipboardText = $clipboardText.ToString().TrimEnd("`r", "`n")'
+#     $clipboardUnchanged 
+#     $clipboardText 
+#     Write-Host "Text1: [$clipboardUnchanged]"
+# Write-Host "Text2: [$clipboardText]"
+# Write-Host "Length1: $($clipboardUnchanged.Length)"
+# Write-Host "Length2: $($clipboardText.Length)"
+    # $clipboardUnchanged -ceq $clipboardText #false
+    # if ($clipboardUnchanged.ToString().TrimEnd("`r", "`n") -cne $clipboardText.ToString().TrimEnd("`r", "`n")){ 
+    # if ($clipboardUnchanged -cne $clipboardText){  #does not do the trick - yields equality, always
+    # if ( ($clipboardUnchanged.Trim() -replace '\r','') -cne ($clipboardText.Trim() -replace '\r','') ){  #does not do the trick - yields equality, always
+    if ( [String]::CompareOrdinal($clipboardUnchanged, $clipboardText) -ne 0 ){ #byte by byte comparision seems to help here - it works!
+        # (Get-Clipboard -Raw)
+        Write-Host 'Clipboard successfully modified.'
+    } ################################DRECKS POWERSHELL WARUM KLAPPT DAS NICHT?????????????
+    else {
+        Write-Host 'Clipboard text has not changed.'
+    }
 }
 
 
-Write-Host 'Clipboard successfully modified.'
+
 if ($persist) {
     Read-Host -Prompt "Press enter to close this window!"
 }
