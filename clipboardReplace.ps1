@@ -21,7 +21,7 @@ param (
     [string]$fileName = "",  
     [Alias("standard", "s", "normal", "n", "default")]          
     [switch]$standardSettings,  
-    [Alias("regularExpressions", "RegEx", "advanced", "regExP")]          
+    [Alias("regularExpressions", "regEx", "advanced", "regExP")]          
     [switch]$r,  
     [Alias("termOpen", "stay", "windowPersist", "confirm", "p")]          
     [switch]$persist = $false,  
@@ -73,6 +73,8 @@ function set-Standard() {
 }
 
 function show-Helptext() {
+    Write-Host "This PowerShell script is intended to apply basic search (and replace) actions to the content of the clipboard. Search/Replace strings may not only be provided as CLI arguments, but also in the form of lists as predefined files/folders with suitable content."
+    Write-Host ""
     Write-Host "Usage:"
     Write-Host "  -searchFolderPath   Path to folder with search files as string"
     Write-Host "  -searchFilePath     Path to file with lines to search for as string"
