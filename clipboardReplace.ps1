@@ -29,7 +29,7 @@ param (
     [switch]$extractMatch  
 )
 
-function set-Standard() {
+function set-Standard() {  # Set standard preferences (file/folder names) if applicable (dependant of existence)
     # $searchFilePath = $null
     # $replaceFilePath = $null
     # $searchFolderPath = $null
@@ -72,7 +72,7 @@ function set-Standard() {
     # }
 }
 
-function show-Helptext() {
+function show-Helptext() {  # self descriptive: print help text
     Write-Host ""
     Write-Host "This PowerShell script is intended to apply basic search (and replace) actions to the content of the clipboard. Search/Replace strings may not only be provided as named CLI arguments, but also in the form of lists as predefined files/folders with suitable content."
     Write-Host ""
@@ -98,12 +98,11 @@ function show-Helptext() {
     Write-Host ""
 }
 
-function check-Folder {
+function check-Folder {  # Function to check for existence of folder and for files bearing content
     param (
         [Parameter(Mandatory = $true)]
         [string]$Path
     )
-
     # Check whether path is a folder
     if (-not (Test-Path $Path -PathType Container)) {
         return $false
@@ -111,7 +110,6 @@ function check-Folder {
 
     # To accept relative or absolute paths
     $fullPath = Convert-Path $Path
-
     # Call top layer of files
     $files = Get-ChildItem -Path $fullPath -File
 
@@ -119,31 +117,30 @@ function check-Folder {
     if ($files.Count -eq 0) {
         return $false
     }
-
     # Check for file content (size > 0)
     foreach ($file in $files) {
         if ($file.Length -eq 0) {
             return $false
         }
     }
-
     return $true
 }
-
 
 # Read text from clipboard
 $clipboardText = Get-Clipboard
 $clipboardUnchanged = Get-Clipboard
 
 if ([string]::IsNullOrWhiteSpace($clipboardText)) {
-    "No clipboard available. Nothing to do!"
+    Write-Error "No clipboard available. Nothing to do!"
     exit
 }
 
+# Apply standard settings if user wishes to do so
 if ($standardSettings) {
     set-Standard
 }
 
+# Show help text if desired, then exit
 if (
     $Help.IsPresent -or  # Help flag provided or
     (
@@ -158,7 +155,6 @@ if (
     exit
 }
 
-
 # Read file contents explicitly as arrays, but only if they exist
 if (-not [string]::IsNullOrWhiteSpace($searchFilePath)) {
     $searchLines = @(Get-Content -Path $searchFilePath)
@@ -166,7 +162,6 @@ if (-not [string]::IsNullOrWhiteSpace($searchFilePath)) {
 if (-not [string]::IsNullOrWhiteSpace($searchText)) {
     $searchLines += ,$searchText  # So that $searchLines will be an array
 }
-
 if (-not [string]::IsNullOrWhiteSpace($replaceFilePath)) {
     $replaceLines = @(Get-Content -Path $replaceFilePath)  # Urgent need of arrays: @( )
 }
@@ -174,6 +169,7 @@ if (-not [string]::IsNullOrWhiteSpace($replaceText)) {
     $replaceLines += ,$replaceText
 }
 
+# Process the grepping functionality: extracting matches
 if ($extractMatch) {
     # Match extraction: extract matches
     # Printing line nr of match, match itself, CRLF, full line, CRLF 
@@ -237,6 +233,7 @@ else {  # Else => if (-not $extractMatch)
     }
 }
 
+ # Filling up entries for replacement, if too less are provided they are assumed to be vanished (replaced by NULL)
 if (-not [string]::IsNullOrWhiteSpace($searchFilePath) -and
     -not [string]::IsNullOrWhiteSpace($replaceFilePath)  # Both need to exist
     ) {
@@ -314,7 +311,44 @@ if ($null -ne $replaceLines -and $replaceLines.Count -gt 0 -and $null -ne $searc
 #     }
 # }
 
-if ($fileOutput) { # This runs if output as file is desired, therefore needs to be called at end
+#does not work properly, only for single line files?!
+# # Process folder: file by file
+# # Find all .txt files in the folders and sort them alphabetically
+# $searchFiles = Get-ChildItem -Path $searchFolderPath -Filter *.txt | Sort-Object Name
+# $replaceFiles = Get-ChildItem -Path $replaceFolderPath -Filter *.txt | Sort-Object Name
+
+# # Check if the number of files in both folders matches
+# if ($searchFiles.Count -ne $replaceFiles.Count) {
+#     Write-Error "The number of files in the SEARCH and REPLACE folders does not match."
+#     exit
+# }
+# # Iterate over the files and perform the replacements
+# for ($i = 0; $i -lt $searchFiles.Count; $i++) {
+#     # Read the content of the current files
+#     $searchContent = Get-Content -Path $searchFiles[$i].FullName -Raw
+#     $replaceContent = Get-Content -Path $replaceFiles[$i].FullName -Raw
+#     $searchContent
+#     $replaceContent
+#     # Replace the content in the text variable (case-sensitive)
+#     #Case-Sensitive + RegEx
+#     $clipboardText = [regex]::Replace($clipboardText, [regex]::Escape($searchContent), $replaceContent)
+#     # $clipboardText = [regex]::Replace($clipboardText, $searchContent, $replaceContent)
+
+#     #Case-Sensitive - RegEx
+#     #$clipboardText = $clipboardText.Replace($searchContent, $replaceContent)
+#     #Case-In-Sensitive + RegEx
+#     #$clipboardText = [regex]::Replace($clipboardText, [regex]::Escape($searchContent), $replaceContent, 'IgnoreCase')
+#     #Case-In-Sensitive - RegEx APPARENTLY WRONG SEE clipboardreplace_.ps1
+#     #$clipboardText = $clipboardText -replace ([regex]::Escape($searchContent)), $replaceContent
+#         #gpt's suggestion (stupid?!)
+#             # $index = $clipboardText.IndexOf($searchContent, [System.StringComparison]::OrdinalIgnoreCase)
+#             # if ($index -ge 0) {
+#             #     $clipboardText = $clipboardText.Substring(0, $index) + $replaceContent + $clipboardText.Substring($index + $searchContent.Length)
+#             # }
+#         #as before, better: use -replace with regex but escape all metachars
+# }
+
+if ($fileOutput) { # This runs if output as file is desired, therefore needs to be called at the end
     # Timestamp generation
     $timeStamp = Get-Date -Format "yyyyMMdd_HHmmss"
 
