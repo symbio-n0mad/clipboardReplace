@@ -128,7 +128,7 @@ function check-Folder {  # Function to check for existence of folder and for fil
 
 # Read text from clipboard
 $clipboardText = Get-Clipboard
-$clipboardUnchanged = Get-Clipboard
+$clipboardUnchanged = $clipboardText
 
 if ([string]::IsNullOrWhiteSpace($clipboardText)) {
     Write-Error "No clipboard available. Nothing to do!"
