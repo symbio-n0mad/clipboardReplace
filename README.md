@@ -23,7 +23,7 @@ clipboardReplace.ps1 -r -i -searchText "foo.*bar" -replaceText "baz"
 
 # Write result to file (uses SEARCH.txt / REPLACE.txt)
 clipboardReplace.ps1 -standard -fileOutput -saveAs "output.txt"
-
+´´´
 ---
 
 ##  Tip: Run via Keyboard Shortcut (Windows)
