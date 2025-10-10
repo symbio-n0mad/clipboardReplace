@@ -48,3 +48,4 @@ You can achieve this easily using a **desktop shortcut** that launches PowerShel
 
 3. **Use It**
    - Now you can simply press your shortcut and run `clipboardReplace.ps1` instantly — perfect for quick clipboard transformations or grep-style searches on the fly.
+---
