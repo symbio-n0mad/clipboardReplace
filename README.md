@@ -3,7 +3,7 @@
 A lightweight PowerShell script for **search & replace operations** directly on your **clipboard content**.
 
 
-- Supports **text files** (`SEARCH.txt`, `REPLACE.txt`) or **inline strings** as search and replace targets
+- Supports **inline strings** or **text files** (`SEARCH.txt`, `REPLACE.txt`) as search and replace ammo
 - Optional **RegEx** (`-r`) and **case-insensitive** (`-i`) modes
 - Includes a **grep-like search mode** (`-grep`) for quick text filtering 🔍 
 - Can **output to file** instead of clipboard (`-w`, `-saveAs`)
@@ -21,7 +21,7 @@ clipboardReplace.ps1 -grep -persist -searchText "pattern"
 # RegEx and case-insensitive
 clipboardReplace.ps1 -r -i -searchText "foo.*bar" -replaceText "baz"
 
-# Write result to file (uses SEARCH.txt / REPLACE.txt)
+# Write result to file (uses standard filenames SEARCH.txt / REPLACE.txt as input)
 clipboardReplace.ps1 -standard -fileOutput -saveAs "output.txt"
 ```
 ---
@@ -44,8 +44,8 @@ You can achieve this easily using a **desktop shortcut** that launches PowerShel
 2. **Assign a Keyboard Shortcut**
    - Right-click the newly created shortcut → **Properties**
    - In the **Shortcut** tab, click inside the *Shortcut key* field and press your desired key combo (e.g. `Ctrl + Alt + R`)
-   - Click **Apply** and **OK**
+   - Click **Apply** or **OK**
 
 3. **Use It**
-   - Now you can simply press your shortcut and run `clipboardReplace.ps1` instantly — perfect for quick clipboard transformations or grep-style searches on the fly.
+   - Now you can simply press your shortcut and run `clipboardReplace.ps1` instantly — perfect for quick routine clipboard transformations or grep-style searches on the fly.
 ---
