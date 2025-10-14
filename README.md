@@ -37,7 +37,7 @@ You can achieve this easily using a **desktop shortcut** that launches PowerShel
    - Right-click on your desktop → **New → Shortcut**  
    - For the location, enter something like:
      ```powershell
-     powershell.exe -ExecutionPolicy Bypass -File "C:\Path\To\clipboardReplace.ps1"
+     powershell.exe -ExecutionPolicy Bypass -File "C:\Path\To\clipboardReplace.ps1" -r -i -searchText "foo.*bar" -replaceText "baz"
      ```
      >  `-ExecutionPolicy Bypass` ensures the script runs without restrictions, even if PowerShell’s default policy is limited.
 
