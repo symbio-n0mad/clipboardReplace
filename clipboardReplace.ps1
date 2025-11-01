@@ -30,10 +30,6 @@ param (
 )
 
 function set-Standard() {  # Set standard preferences (file/folder names) if applicable (dependant of existence)
-    # $searchFilePath = $null
-    # $replaceFilePath = $null
-    # $searchFolderPath = $null
-    # $replaceFolderPath = $null
 
     # Standard paths
     $searchFile = ".\SEARCH.txt"
@@ -55,37 +51,27 @@ function set-Standard() {  # Set standard preferences (file/folder names) if app
     if ($foldersExist) {
         $script:searchFolderPath = $searchFolder
         $script:replaceFolderPath = $replaceFolder
-        Write-Host "Folder for search patterns is $searchFolderPath"
-        Write-Host "Folder for replacement patterns is $replaceFolderPath"
+        #Write-Host "Folder for search patterns is $searchFolderPath"
+        #Write-Host "Folder for replacement patterns is $replaceFolderPath"
     }
     if (!($filesExist) -and -Not($foldersExist)) {
-        Write-Error "Neither the required files nor the required folders exist. Please check the paths."
+        Write-Error "Required files do not exist. Please check the paths."
         exit
     }
-
-    # Return object
-    # return [PSCustomObject]@{
-    #     SearchFilePath   = $searchFilePath
-    #     ReplaceFilePath  = $replaceFilePath
-    #     SearchFolderPath = $searchFolderPath
-    #     ReplaceFolderPath = $replaceFolderPath
-    # }
 }
 
 function show-Helptext() {  # self descriptive: print help text
     Write-Host ""
-    Write-Host "This PowerShell script is intended to apply basic search (and replace) actions to the content of the clipboard. Search/Replace strings may not only be provided as named CLI arguments, but also in the form of lists as predefined files/folders with suitable content."
+    Write-Host "This PowerShell script is intended to apply basic search (and replace) actions to the content of the clipboard. Search/Replace strings may not only be provided as named CLI arguments, but also in the form of lists as predefined files with suitable content."
     Write-Host ""
     Write-Host "Usage:"
-    Write-Host "  -searchFolderPath         Path to folder with search files as string"
     Write-Host "  -searchFilePath           Path to file with lines to search for as string"
     Write-Host "  -searchText               String to search for"
     Write-Host "and corresponding"
-    Write-Host "  -replaceFolderPath        Path to folder with replace files as string"
     Write-Host "  -replaceFilePath          Path to file with replacement lines as string"
     Write-Host "  -replaceText              Replacement string"
     Write-Host "or"
-    Write-Host "  -s / -standardSettings       Loads the standard folder or file names SEARCH/REPLACE or SEARCH/REPLACE.txt"
+    Write-Host "  -s / -standardSettings       Loads the standard file names SEARCH.txt and REPLACE.txt"
     Write-Host "further options"
     Write-Host "  -r / -RegEx               Permit use of Regular Expressions"
     Write-Host "  -x / -grep                Search and extract patterns (cancels replacement)"
@@ -172,21 +158,18 @@ if (-not [string]::IsNullOrWhiteSpace($replaceText)) {
 # Process the grepping functionality: extracting matches
 if ($extractMatch) {
     # Match extraction: extract matches
-    # Printing line nr of match, match itself, CRLF, full line, CRLF 
-
+    #### Printing line nr of match, match itself, CRLF, full line, CRLF; and match count ###
     # Define search string as empty variable
+    $matchCount = 0
     $pattern = ""
     # Text splitting to lines
     $lines = $clipboardText -split "`r?`n"
-
     for ($j = 0; $j -lt $searchLines.Count; $j++) {
         $pattern = $searchLines[$j]
-
         # Iterate lines
         for ($i = 0; $i -lt $lines.Length; $i++) {
             $lineNumber = $i + 1
             $line = $lines[$i]
-
             if ($ci) {
                 if ($r) {
                     # Regex-search
@@ -194,6 +177,7 @@ if ($extractMatch) {
                         Write-Output "${lineNumber}: $($m.Value)"  # Match 
                         Write-Output "${lineNumber}: $line"        # Full line
                         Write-Output ""                            # empty line/CRLF
+                        $matchCount++
                     }
                 } else {
                     # Literal search
@@ -201,6 +185,7 @@ if ($extractMatch) {
                         Write-Output "${lineNumber}: $pattern"    # Match 
                         Write-Output "${lineNumber}: $line"       # Full line
                         Write-Output ""                           # CRLF
+                        $matchCount++
                     }
                 }
             }
@@ -211,6 +196,7 @@ if ($extractMatch) {
                         Write-Output "${lineNumber}: $($m.Value)"  # Match 
                         Write-Output "${lineNumber}: $line"        # Full line
                         Write-Output ""                            # empty line/CRLF
+                        $matchCount++
                     }
                 } else {
                     # Literal search (case-sensitive)
@@ -218,10 +204,17 @@ if ($extractMatch) {
                         Write-Output "${lineNumber}: $pattern"    # Match 
                         Write-Output "${lineNumber}: $line"       # Full line
                         Write-Output ""                           # CRLF
+                        $matchCount++
                     }
                 }
             }
         }
+    }
+    if ($matchCount -eq 0) {
+        Write-Output "No matches at all"
+    }
+    else {
+        Write-Output "Count of all matches is $matchCount"
     }
 }
 else {  # Else => if (-not $extractMatch) 
@@ -296,57 +289,6 @@ if ($null -ne $replaceLines -and $replaceLines.Count -gt 0 -and $null -ne $searc
         }
     }
 }
-
-# "`$searchFolderPath:"
-# $searchFolderPath
-# if (-not [string]::IsNullOrWhiteSpace($replaceFolderPath)) {
-#     "replaceFolderPath not empty"
-# }
-# if (-not [string]::IsNullOrWhiteSpace($searchFolderPath)) {
-#     if (check-folder($searchFolderPath)) {
-#         "Folder check successfull"
-#     }
-#     else {
-#         "Folder check failed"
-#     }
-# }
-
-#does not work properly, only for single line files?!
-# # Process folder: file by file
-# # Find all .txt files in the folders and sort them alphabetically
-# $searchFiles = Get-ChildItem -Path $searchFolderPath -Filter *.txt | Sort-Object Name
-# $replaceFiles = Get-ChildItem -Path $replaceFolderPath -Filter *.txt | Sort-Object Name
-
-# # Check if the number of files in both folders matches
-# if ($searchFiles.Count -ne $replaceFiles.Count) {
-#     Write-Error "The number of files in the SEARCH and REPLACE folders does not match."
-#     exit
-# }
-# # Iterate over the files and perform the replacements
-# for ($i = 0; $i -lt $searchFiles.Count; $i++) {
-#     # Read the content of the current files
-#     $searchContent = Get-Content -Path $searchFiles[$i].FullName -Raw
-#     $replaceContent = Get-Content -Path $replaceFiles[$i].FullName -Raw
-#     $searchContent
-#     $replaceContent
-#     # Replace the content in the text variable (case-sensitive)
-#     #Case-Sensitive + RegEx
-#     $clipboardText = [regex]::Replace($clipboardText, [regex]::Escape($searchContent), $replaceContent)
-#     # $clipboardText = [regex]::Replace($clipboardText, $searchContent, $replaceContent)
-
-#     #Case-Sensitive - RegEx
-#     #$clipboardText = $clipboardText.Replace($searchContent, $replaceContent)
-#     #Case-In-Sensitive + RegEx
-#     #$clipboardText = [regex]::Replace($clipboardText, [regex]::Escape($searchContent), $replaceContent, 'IgnoreCase')
-#     #Case-In-Sensitive - RegEx APPARENTLY WRONG SEE clipboardreplace_.ps1
-#     #$clipboardText = $clipboardText -replace ([regex]::Escape($searchContent)), $replaceContent
-#         #gpt's suggestion (stupid?!)
-#             # $index = $clipboardText.IndexOf($searchContent, [System.StringComparison]::OrdinalIgnoreCase)
-#             # if ($index -ge 0) {
-#             #     $clipboardText = $clipboardText.Substring(0, $index) + $replaceContent + $clipboardText.Substring($index + $searchContent.Length)
-#             # }
-#         #as before, better: use -replace with regex but escape all metachars
-# }
 
 if ($fileOutput) { # This runs if output as file is desired, therefore needs to be called at the end
     # Timestamp generation
