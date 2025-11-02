@@ -11,8 +11,8 @@ param (
     [string]$searchText = "",   
     [Alias("text2", "replace", "displace", "substitute", "replaceBy")]          
     [string]$replaceText = "",
-    [Alias("wait", "delay", "millis", "time", "t" , "z" , "ms")] 
-    [int]$timeout = 0,
+    [Alias("wait", "delay", "seconds", "time", "t" , "z")] 
+    [string]$timeout = "0",
     [Alias("showHelp", "h", "hint", "usage")]          
     [switch]$Help = $false,
     [Alias("caseInsensitive", "caseMattersNot", "ignoreCase", "ic", "i")]          
@@ -32,7 +32,7 @@ param (
 )
 
 function wait-Timeout([int]$additionalTime = 0) {
-    $newDelay = [math]::Abs($timeout) + $additionalTime
+    $newDelay = [math]::Abs([int]([math]::Round(([double]($timeout -replace ',','.') * 1000)))) + $additionalTime #convert , to . then from string to double multiply 1k then round and convert to int and then take abs
     if ($newDelay -ne 0){
         Start-Sleep -Milliseconds ($newDelay)
     }
@@ -126,6 +126,11 @@ function check-Folder {  # Function to check for existence of folder and for fil
         }
     }
     return $true
+}
+
+if ($timeout.Contains("-")) {  # Negative values will yield waiting time at program start
+    wait-Timeout
+    $timeout = "0"
 }
 
 # Read text from clipboard
@@ -321,7 +326,7 @@ if ($fileOutput) { # This runs if output as file is desired, therefore needs to 
         $baseName = [System.IO.Path]::GetFileNameWithoutExtension($fileName)
         $fileName = "${baseName}_$timeStamp$extension"
     }
-    
+
     # Save file
     $clipboardText | Out-File -FilePath $fileName -Encoding UTF8
     Write-Output "Results saved in file: $fileName"
