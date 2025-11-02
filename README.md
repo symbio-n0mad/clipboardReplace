@@ -6,7 +6,8 @@ A lightweight PowerShell script for **search & replace operations** directly on 
 - Supports **inline strings** or **text files** (`SEARCH.txt`, `REPLACE.txt`) as search and replace ammo
 - Optional **RegEx** (`-r`) and **case-insensitive** (`-i`) modes
 - Includes a **grep-like search mode** (`-grep`) for quick text filtering 🔍 
-- Can **output to file** instead of clipboard (`-w`, `-saveAs`)
+- Can **output to file** instead of clipboard (`-w`, `-saveAs`, optionally:`-o` + `<FILENAME>`)
+- Hold the terminal open for milliseconds (`-timeout` + `<TIME-IN-MS>`) or until confirmation (`-confirm`)
 - Run with -h or -usage to see all available flags.
 
 ###  Examples
