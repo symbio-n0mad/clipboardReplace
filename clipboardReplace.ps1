@@ -7,10 +7,12 @@ param (
     [string]$searchFilePath = "",    
     [Alias("file2", "replaceFile")]          
     [string]$replaceFilePath = "",
-    [Alias("text1", "search", "find", "findText")]
+    [Alias("text1", "search", "find", "findText", "searchFor")]
     [string]$searchText = "",   
-    [Alias("text2", "replace", "displace", "substitute")]          
+    [Alias("text2", "replace", "displace", "substitute", "replaceBy")]          
     [string]$replaceText = "",
+    [Alias("wait", "delay", "millis", "time", "t" , "z" , "ms")] 
+    [int]$timeout = 0,
     [Alias("showHelp", "h", "hint", "usage")]          
     [switch]$Help = $false,
     [Alias("caseInsensitive", "caseMattersNot", "ignoreCase", "ic", "i")]          
@@ -19,18 +21,31 @@ param (
     [switch]$fileOutput = $false,
     [Alias("outputName", "saveFileName", "outName", "saveAs", "o", "out", "output")]
     [string]$fileName = "",  
-    [Alias("standard", "s", "normal", "n", "default")]          
+    [Alias("standard", "s", "normal", "n", "default", "d")]          
     [switch]$standardSettings,  
     [Alias("regularExpressions", "regEx", "advanced", "regExP")]          
     [switch]$r,  
-    [Alias("termOpen", "stay", "windowPersist", "confirm", "p")]          
+    [Alias("termOpen", "stay", "windowPersist", "confirm", "p", "c")]          
     [switch]$persist = $false,  
     [Alias("grep", "ext", "e", "x", "extract")]          
     [switch]$extractMatch  
 )
 
-function set-Standard() {  # Set standard preferences (file/folder names) if applicable (dependant of existence)
+function wait-Timeout([int]$additionalTime = 0) {
+    $newDelay = [math]::Abs($timeout) + $additionalTime
+    if ($newDelay -ne 0){
+        Start-Sleep -Milliseconds ($newDelay)
+    }
+}
 
+function check-Confirmation() {
+    if ($persist){
+        Write-Host "Press Enter to exit..."
+        [void][System.Console]::ReadLine()
+    }
+}
+
+function set-Standard() {  # Set standard preferences (file/folder names) if applicable (dependant of existence)
     # Standard paths
     $searchFile = ".\SEARCH.txt"
     $replaceFile = ".\REPLACE.txt"
@@ -51,11 +66,11 @@ function set-Standard() {  # Set standard preferences (file/folder names) if app
     if ($foldersExist) {
         $script:searchFolderPath = $searchFolder
         $script:replaceFolderPath = $replaceFolder
-        #Write-Host "Folder for search patterns is $searchFolderPath"
-        #Write-Host "Folder for replacement patterns is $replaceFolderPath"
+        Write-Host "Folder for search patterns is $searchFolderPath"
+        Write-Host "Folder for replacement patterns is $replaceFolderPath"
     }
     if (!($filesExist) -and -Not($foldersExist)) {
-        Write-Error "Required files do not exist. Please check the paths."
+        Write-Error "Neither the required files nor the required folders exist. Please check the paths."
         exit
     }
 }
@@ -71,16 +86,17 @@ function show-Helptext() {  # self descriptive: print help text
     Write-Host "  -replaceFilePath          Path to file with replacement lines as string"
     Write-Host "  -replaceText              Replacement string"
     Write-Host "or"
-    Write-Host "  -s / -standardSettings       Loads the standard file names SEARCH.txt and REPLACE.txt"
+    Write-Host "  -s / -standardSettings       Loads the standard folder or file names SEARCH/REPLACE or SEARCH/REPLACE.txt"
     Write-Host "further options"
     Write-Host "  -r / -RegEx               Permit use of Regular Expressions"
-    Write-Host "  -x / -grep                Search and extract patterns (cancels replacement)"
+    Write-Host "  -x / -grep                Search and extract patterns"
     Write-Host "  -i / -ignoreCase          Ignore case while searching"
     Write-Host ""
     Write-Host "  -w / -fileOutput          Write to file, not clipboard"
-    Write-Host "  -o / -saveAs              Provide output filename as string"
+    Write-Host "  -o / -saveAs              Provide output filename as string (optional)"
     Write-Host ""
-    Write-Host "  -p / -persist             After running the script, terminal will wait for confirmation"
+    Write-Host "  -p / -persist             Waiting for confirmation at the end holds open the terminal"
+    Write-Host "  -t / -timeout             Waiting time in milliseconds before ending the program"
     Write-Host ""
 }
 
@@ -117,6 +133,7 @@ $clipboardText = Get-Clipboard
 $clipboardUnchanged = $clipboardText
 
 if ([string]::IsNullOrWhiteSpace($clipboardText)) {
+    Write-Output "No clipboard available. Nothing to do!"
     Write-Error "No clipboard available. Nothing to do!"
     exit
 }
@@ -136,7 +153,8 @@ if (
     )
 ) {
     show-Helptext
-    Start-Sleep -Milliseconds 750
+    check-Confirmation
+    wait-Timeout(750)
     # Read-Host -Prompt "Press Enter to end program!"
     exit
 }
@@ -158,7 +176,7 @@ if (-not [string]::IsNullOrWhiteSpace($replaceText)) {
 # Process the grepping functionality: extracting matches
 if ($extractMatch) {
     # Match extraction: extract matches
-    #### Printing line nr of match, match itself, CRLF, full line, CRLF; and match count ###
+    #### Printing line nr of match, match itself, CRLF, full line, CRLF ###
     # Define search string as empty variable
     $matchCount = 0
     $pattern = ""
@@ -217,13 +235,12 @@ if ($extractMatch) {
         Write-Output "Count of all matches is $matchCount"
     }
 }
-else {  # Else => if (-not $extractMatch) 
-    # if ($searchLines.Count -ne $replaceLines.Count) {
-    if ($searchLines.Count -lt $replaceLines.Count) {  # Search terms being < replace terms is impossible
-        Write-Error "Error: Line count of provided files not usable, check entries!"
-        Read-Host -Prompt "Press enter to end program"
-        exit
-    }
+
+# if ($searchLines.Count -ne $replaceLines.Count) {
+if ($searchLines.Count -lt $replaceLines.Count) {  # Search terms being < replace terms is impossible
+    Write-Error "Error: Line count of provided files not usable, check entries!"
+    Read-Host -Prompt "Press enter to end program"
+    exit
 }
 
  # Filling up entries for replacement, if too less are provided they are assumed to be vanished (replaced by NULL)
@@ -304,7 +321,7 @@ if ($fileOutput) { # This runs if output as file is desired, therefore needs to 
         $baseName = [System.IO.Path]::GetFileNameWithoutExtension($fileName)
         $fileName = "${baseName}_$timeStamp$extension"
     }
-
+    
     # Save file
     $clipboardText | Out-File -FilePath $fileName -Encoding UTF8
     Write-Output "Results saved in file: $fileName"
@@ -320,6 +337,5 @@ else {  # Else = no file output? -> then set clipboard content (only if it chang
     }
 }
 
-if ($persist) {
-    Read-Host -Prompt "Press enter to close this window!"
-}
+check-Confirmation
+wait-Timeout
