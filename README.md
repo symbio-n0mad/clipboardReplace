@@ -1,6 +1,6 @@
 #  clipboardReplace.ps1
 
-A lightweight PowerShell script for **search & replace operations** directly on your **clipboard content**.
+A lightweight PowerShell script for **search or search & replace operations** directly on your **clipboard content**.
 
 
 - Supports **inline strings** (`-search foo`, `-replace bar`) or **text files** (explanation below) as search and replace ammo
