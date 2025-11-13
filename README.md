@@ -3,11 +3,11 @@
 A lightweight PowerShell script for **search & replace operations** directly on your **clipboard content**.
 
 
-- Supports **inline strings** or **text files** (`SEARCH.txt`, `REPLACE.txt`) as search and replace ammo
+- Supports **inline strings** (`-search foo`, `-replace bar`) or **text files** (explanation below) as search and replace ammo
 - Optional **RegEx** (`-r`) and **case-insensitive** (`-i`) modes
 - Includes a **grep-like search mode** (`-grep`) for quick text filtering 🔍 
-- Can **output to file** instead of clipboard (`-write`, optionally:`-saveAs` + `<FILENAME>`)
-- Hold the terminal open for milliseconds (`-timeout` + `<TIME-IN-MS>`) or until confirmation (`-confirm`)
+- Can **output to file** instead of clipboard (`-write`, optionally:`-saveAs <FILENAME>`)
+- Time delay in seconds to hold the terminal open (`-timeout <SECONDS>`, decimals allowed) or until confirmation (`-confirm`)
 - Run with -h or -usage to see all available flags.
 
 ###  Examples
@@ -48,5 +48,5 @@ You can achieve this easily using a **desktop shortcut** that launches PowerShel
    - Click **Apply** or **OK**
 
 3. **Use It**
-   - Now you can simply press your shortcut and run `clipboardReplace.ps1` instantly — perfect for quick routine clipboard transformations or grep-style searches on the fly.
+   - Now you can simply press your shortcut to run `clipboardReplace.ps1` instantly — perfect for quick routine clipboard transformations or grep-style searches on the fly.
 ---
