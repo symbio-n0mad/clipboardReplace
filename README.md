@@ -1,31 +1,36 @@
-#  clipboardReplace.ps1
+# clipboardReplace.ps1
 
 A lightweight PowerShell script for **search or search & replace operations** directly on your **clipboard content**.
 
-
-- Supports **inline strings** (`-search foo`, `-replace bar`) or **text files** (explanation below) as search and replace ammo
-- Optional **RegEx** (`-r`) and **case-insensitive** (`-i`) modes
-- Includes a **grep-like search mode** (`-grep`) for quick text filtering 🔍 
-- Can **output to file** instead of clipboard (`-write`, optionally:`-saveAs <FILENAME>`)
-- Time delay in seconds to hold the terminal open (`-timeout <SECONDS>`, decimals allowed) or until confirmation (`-confirm`)
-- Run with -h or -usage to see all available flags.
-
-###  Examples
-```powershell
-
-# Basic use: Inline literal replacement
-clipboardReplace.ps1 -searchText "foo" -replaceText "bar"
-
-# Grep-like search
-clipboardReplace.ps1 -grep -persist -searchText "pattern"
-
-# RegEx and case-insensitive
-clipboardReplace.ps1 -r -i -searchText "foo.*bar" -replaceText "baz"
-
-# Write result to file (uses standard filenames SEARCH.txt / REPLACE.txt as input)
-clipboardReplace.ps1 -standard -fileOutput -saveAs "output.txt"
-```
 ---
+
+## Basic Features
+These are the core, productive features:
+
+- Supports **inline strings** (`-search foo`, `-replace bar`) or **text files** (see below) as search/replace input  
+- Includes a **grep-like search** mode (`-grep`) for quick text filtering 🔍  
+- Optional **RegEx** mode (`-r`) and **case-insensitive mode** (`-i`)  
+- **Terminal stays open** until confirmation (`-confirm`), if desired  
+
+
+---
+### Basic Examples  
+Below are simple examples demonstrating the essential functionality of the script:
+
+```powershell
+# Basic inline search & replace
+# Replaces every occurrence of "foo" with "bar" in the clipboard content.
+clipboardReplace.ps1 -search "foo" -replace "bar"
+
+# Grep-like filtering (no replacement)
+# Keeps only lines that match "pattern" from the clipboard, holds terminal open until confirmation
+clipboardReplace.ps1 -grep -searchText "pattern" -confirm
+
+# RegEx + case-insensitive replacement
+# Finds "foo...bar" regardless of case, and replaces the entire match with "baz".
+clipboardReplace.ps1 -r -i -searchText "foo\d.*bar" -replaceText "baz"
+
+```
 
 ##  Tip: Run via Keyboard Shortcut (Windows)
 
@@ -49,4 +54,32 @@ You can achieve this easily using a **desktop shortcut** that launches PowerShel
 
 3. **Use It**
    - Now you can simply press your shortcut to run `clipboardReplace.ps1` instantly — perfect for quick routine clipboard transformations or grep-style searches on the fly.
+---
+
+
+
+## Exotic / Advanced Features
+All other functional flags are categorized as extended capabilities:
+
+- Explicit **search file** (`-searchFile <FILENAME>`)  
+  - Applied **line by line** (compatible with `-i` and `-r`)
+  - Empty lines **deprecated**
+
+- Explicit **replace file** (`-replaceFile <FILENAME>`)  
+  - Applied **line by line**  
+  - **Empty lines = deletions**
+
+- Can **output to file** instead of clipboard (`-write`)  
+  - If no filename is given, a **timestamp** is used  
+  - Optional explicit filename via `-saveAs <FILENAME>`
+
+- **Time delay** before closing the terminal (`-timeout <SECONDS>`, decimals allowed)  
+  - Negative values introduce a **delay before execution** (useful for fullscreen applications)
+
+- Activate **standard settings** (`-standard`)  
+  - Standard file paths: `.\SEARCH.txt` and `.\REPLACE.txt`  
+  - Corresponding existence is validated and reported
+
+- Display all available flags with `-h` or `-usage`
+
 ---
