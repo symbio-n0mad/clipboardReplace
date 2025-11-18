@@ -31,6 +31,15 @@ param (
     [switch]$extractMatch  
 )
 
+function placeholder() {
+param( [ValidateSet("Low", "High", "")] [string]$DetailLevel = "" ) 
+    if ($PSBoundParameters.ContainsKey('DetailLevel')) { 
+        if ($DetailLevel) { Write-Host "Detaillierungsgrad: $DetailLevel" } 
+        else 
+        { Write-Host "Detaillierungsgrad aktiviert (Standard)" $DetailLevel = "Medium" } 
+    }
+}
+
 function wait-Timeout([int]$additionalTime = 0) {
     $newDelay = [math]::Abs([int]([math]::Round(([double]($timeout -replace ',','.') * 1000)))) + $additionalTime #convert , to . then from string to double multiply 1k then round and convert to int and then take abs
     if ($newDelay -ne 0){
