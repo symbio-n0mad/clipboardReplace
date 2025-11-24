@@ -10,7 +10,7 @@ These are the core, productive features:
 - Supports **inline strings** (`-search foo`, `-replace bar`) or **text files** (see below) as search/replace input  
 - Includes a **grep-like search** mode (`-grep`) for quick text filtering 🔍  
 - Optional **RegEx** mode (`-r`) and **case-insensitive mode** (`-i`)  
-- **Terminal stays open** until confirmation (`-confirm`), if desired  
+
 
 
 ---
@@ -73,8 +73,10 @@ All other functional flags are categorized as extended capabilities:
   - If no filename is given, a **timestamp** is used  
   - Optional explicit filename via `-saveAs <FILENAME>`
 
-- **Time delay** before closing the terminal (`-timeout <SECONDS>`, decimals allowed)  
+- **Time delay** before script ends (`-timeout <SECONDS>`, decimals allowed)  
   - Negative values introduce a **delay before execution** (useful for fullscreen applications)
+
+- **Exit requires confirmation** (Terminal stays open) (`-confirm`)
 
 - Activate **standard settings** (`-standard`)  
   - Standard file paths: `.\SEARCH.txt` and `.\REPLACE.txt`  
