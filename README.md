@@ -85,3 +85,17 @@ All other functional flags are categorized as extended capabilities:
 - Display all available flags with `-h` or `-usage`
 
 ---
+
+## Why PowerShell?
+
+Why PowerShell? Simple: because it’s *already there*.  
+Unlike many languages that would require extra installs or permissions, PowerShell comes preinstalled on (almost) every Windows system — including tightly locked-down enterprise environments.
+
+In those settings, security policies often say:  
+*"No, you can’t run that tool… no, you can’t install that… no, you can’t use that language…"*
+
+And PowerShell just stands there, smiling politely like:  
+**"Hehe, but *I* am allowed — here’s your solution."**
+
+So while it may not be the flashiest choice, PowerShell is the one tool that actually survives the real-world security gauntlet. And that makes it the perfect fit for this project.
+
