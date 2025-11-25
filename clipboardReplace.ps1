@@ -27,20 +27,13 @@ param (
     [switch]$r,  
     [Alias("termOpen", "stay", "windowPersist", "confirm", "p", "c")]          
     [switch]$persist = $false,  
-    [Alias("grep", "ext", "e", "x", "extract")]          
-    [switch]$extractMatch  
+    [Alias("grep", "ext", "e", "x", "extract", "g")]    
+    [switch]$extractMatch
 )
 
-function placeholder() {
-param( [ValidateSet("Low", "High", "")] [string]$DetailLevel = "" ) 
-    if ($PSBoundParameters.ContainsKey('DetailLevel')) { 
-        if ($DetailLevel) { Write-Host "Detaillierungsgrad: $DetailLevel" } 
-        else 
-        { Write-Host "Detaillierungsgrad aktiviert (Standard)" $DetailLevel = "Medium" } 
-    }
-}
 
 function wait-Timeout([int]$additionalTime = 0) {
+    # accepts additional timeout, for internals requiring waiting time (e.g. help text)
     $newDelay = [math]::Abs([int]([math]::Round(([double]($timeout -replace ',','.') * 1000)))) + $additionalTime #convert , to . then from string to double multiply 1k then round and convert to int and then take abs
     if ($newDelay -ne 0){
         Start-Sleep -Milliseconds ($newDelay)
@@ -53,6 +46,7 @@ function check-Confirmation() {
         [void][System.Console]::ReadLine()
     }
 }
+
 
 function set-Standard() {  # Set standard preferences (file/folder names) if applicable (dependant of existence)
     # Standard paths
@@ -86,12 +80,14 @@ function set-Standard() {  # Set standard preferences (file/folder names) if app
 
 function show-Helptext() {  # self descriptive: print help text
     Write-Host ""
-    Write-Host "This PowerShell script is intended to apply basic search (and replace) actions to the content of the clipboard. Search/Replace strings may not only be provided as named CLI arguments, but also in the form of lists as predefined files with suitable content."
+    Write-Host "This PowerShell script is intended to apply basic search (and replace) actions to the content of the clipboard. Search/Replace strings may not only be provided as named CLI arguments, but also in the form of lists as predefined files/folders with suitable content."
     Write-Host ""
     Write-Host "Usage:"
+    Write-Host "  -searchFolderPath         Path to folder with search files as string"
     Write-Host "  -searchFilePath           Path to file with lines to search for as string"
     Write-Host "  -searchText               String to search for"
     Write-Host "and corresponding"
+    Write-Host "  -replaceFolderPath        Path to folder with replace files as string"
     Write-Host "  -replaceFilePath          Path to file with replacement lines as string"
     Write-Host "  -replaceText              Replacement string"
     Write-Host "or"
@@ -105,14 +101,15 @@ function show-Helptext() {  # self descriptive: print help text
     Write-Host "  -o / -saveAs              Provide output filename as string (optional)"
     Write-Host ""
     Write-Host "  -p / -persist             Waiting for confirmation at the end holds open the terminal"
-    Write-Host "  -t / -timeout             Waiting time in milliseconds before ending the program"
+    Write-Host "  -t / -timeout             Waiting time in seconds before ending the program"
     Write-Host ""
 }
 
 function check-Folder {  # Function to check for existence of folder and for files bearing content
     param (
         [Parameter(Mandatory = $true)]
-        [string]$Path
+        [string]$Path,
+        [switch]$Strict
     )
     # Check whether path is a folder
     if (-not (Test-Path $Path -PathType Container)) {
@@ -128,13 +125,67 @@ function check-Folder {  # Function to check for existence of folder and for fil
     if ($files.Count -eq 0) {
         return $false
     }
-    # Check for file content (size > 0)
-    foreach ($file in $files) {
-        if ($file.Length -eq 0) {
-            return $false
+    if ($Strict) {
+        # Check for file content (size > 0)
+        foreach ($file in $files) {
+            if ($file.Length -eq 0) {
+                return $false
+            }
         }
     }
     return $true
+}
+
+function replaceFolderWise() {
+
+    if (-not [string]::IsNullOrWhiteSpace($searchFolderPath)) {
+        if (-not (check-folder -Path $searchFolderPath -Strict)) {
+            "Folder check failed, path non-existent or files empty"
+        }
+        else {
+            #"Folder check successfull"
+        }
+        if (-not (check-folder -Path $replaceFolderPath)) {
+            "Folder check failed, path non-existent"
+        }
+        else {
+            #"Folder check successfull"
+        }
+    }
+
+    $searchFiles = Get-ChildItem -Path $searchFolderPath -Filter *.txt | Sort-Object Name
+    $replaceFiles = Get-ChildItem -Path $replaceFolderPath -Filter *.txt | Sort-Object Name
+
+
+    # Check if the number of files in both folders matches
+    if ($searchFiles.Count -ne $replaceFiles.Count) {
+        Write-Error "The number of .txt-files in the SEARCH and REPLACE folders does not match."
+        exit
+    }
+    for ($i = 0; $i -lt $searchFiles.Count; $i++) {
+        # Lese den Inhalt der aktuellen Dateien
+        $searchContent = Get-Content -Path $searchFiles[$i].FullName -Raw
+        $replaceContent = Get-Content -Path $replaceFiles[$i].FullName -Raw
+        if ($ci) { 
+            if ($r) {
+                 $searchContent = $searchContent
+            }
+            else {
+                $searchContent = '(?i)' + [regex]::Escape($searchContent)
+            }
+        }
+        else{
+            if ($r) {
+                $searchContent = $searchContent
+            }
+            else {
+                $searchContent = [regex]::Escape($searchContent)
+            }
+        }
+        # Ersetze den Inhalt in der clipboardText (case-sensitive)
+        #$clipboardText = [regex]::Replace($clipboardText, [regex]::Escape($searchContent), $replaceContent)
+        $clipboardText = [regex]::Replace($clipboardText, $searchContent, $replaceContent)
+    }
 }
 
 if ($timeout.Contains("-")) {  # Negative values will yield waiting time at program start
@@ -164,6 +215,7 @@ if (
         ($searchFolderPath.Trim().Length -eq 0) -and    # No folder         or
         ($searchFilePath.Trim().Length -eq 0) -and      # No file           or
         ($searchText.Trim().Length -eq 0)               # No search text    provided
+
     )
 ) {
     show-Helptext
@@ -180,6 +232,9 @@ if (-not [string]::IsNullOrWhiteSpace($searchFilePath)) {
 if (-not [string]::IsNullOrWhiteSpace($searchText)) {
     $searchLines += ,$searchText  # So that $searchLines will be an array
 }
+# if (-not [string]::IsNullOrWhiteSpace($extractMatch)) {
+#     $searchLines += ,$extractMatch  # So that $searchLines will be an array
+# }
 if (-not [string]::IsNullOrWhiteSpace($replaceFilePath)) {
     $replaceLines = @(Get-Content -Path $replaceFilePath)  # Urgent need of arrays: @( )
 }
@@ -188,7 +243,7 @@ if (-not [string]::IsNullOrWhiteSpace($replaceText)) {
 }
 
 # Process the grepping functionality: extracting matches
-if ($extractMatch) {
+if ($extractMatch) { 
     # Match extraction: extract matches
     #### Printing line nr of match, match itself, CRLF, full line, CRLF ###
     # Define search string as empty variable
@@ -198,6 +253,7 @@ if ($extractMatch) {
     $lines = $clipboardText -split "`r?`n"
     for ($j = 0; $j -lt $searchLines.Count; $j++) {
         $pattern = $searchLines[$j]
+        $escpattern = [regex]::Escape($pattern)
         # Iterate lines
         for ($i = 0; $i -lt $lines.Length; $i++) {
             $lineNumber = $i + 1
@@ -213,8 +269,10 @@ if ($extractMatch) {
                     }
                 } else {
                     # Literal search
-                    if ($line -like "*$pattern*") {
-                        Write-Output "${lineNumber}: $pattern"    # Match 
+                    foreach ($m in [regex]::Matches($line, $escpattern)) {
+                    # if ($line -like "*$pattern*") {
+                        #Write-Output "${lineNumber}: $pattern"    # Match 
+                        Write-Output "${lineNumber}: $($m.Value)"  # Match
                         Write-Output "${lineNumber}: $line"       # Full line
                         Write-Output ""                           # CRLF
                         $matchCount++
@@ -232,8 +290,10 @@ if ($extractMatch) {
                     }
                 } else {
                     # Literal search (case-sensitive)
-                    if ($line.Contains($pattern)) {
-                        Write-Output "${lineNumber}: $pattern"    # Match 
+                    foreach ($m in [regex]::Matches($line, $escpattern, [System.Text.RegularExpressions.RegexOptions]::None)) {
+                    #if ($line.Contains($pattern)) {
+                        Write-Output "${lineNumber}: $($m.Value)"  # Match 
+                        #Write-Output "${lineNumber}: $pattern"    # Match 
                         Write-Output "${lineNumber}: $line"       # Full line
                         Write-Output ""                           # CRLF
                         $matchCount++
@@ -320,6 +380,15 @@ if ($null -ne $replaceLines -and $replaceLines.Count -gt 0 -and $null -ne $searc
         }
     }
 }
+
+
+
+
+
+replaceFolderWise # SOLLTE KLAPPEN ABER ORDNER UND DATEI CHECKS SOWIE IF ABFRAGE FUER ENTSPR OPTIONEN FEHLEN KOMPLETT
+
+
+
 
 if ($fileOutput) { # This runs if output as file is desired, therefore needs to be called at the end
     # Timestamp generation
