@@ -8,9 +8,9 @@ param (
     [Alias("file2", "replaceFile")]          
     [string]$replaceFilePath = "",
     [Alias("text1", "search", "find", "findText", "searchFor")]
-    [string]$searchText = "",   
+    [string[]]$searchText,   
     [Alias("text2", "replace", "displace", "substitute", "replaceBy")]          
-    [string]$replaceText = "",
+    [string[]]$replaceText,
     [Alias("wait", "delay", "seconds", "time", "t" , "z")] 
     [string]$timeout = "0",
     [Alias("showHelp", "h", "hint", "usage")]          
@@ -85,11 +85,11 @@ function show-Helptext() {  # self descriptive: print help text
     Write-Host "Usage:"
     Write-Host "  -searchFolderPath         Path to folder with search files as string"
     Write-Host "  -searchFilePath           Path to file with lines to search for as string"
-    Write-Host "  -searchText               String to search for"
+    Write-Host "  -searchText               String (or comma separated string list) to search for"
     Write-Host "and corresponding"
     Write-Host "  -replaceFolderPath        Path to folder with replace files as string"
     Write-Host "  -replaceFilePath          Path to file with replacement lines as string"
-    Write-Host "  -replaceText              Replacement string"
+    Write-Host "  -replaceText              Replacement string (or comma separated string list)"
     Write-Host "or"
     Write-Host "  -s / -standardSettings       Loads the standard folder or file names SEARCH/REPLACE or SEARCH/REPLACE.txt"
     Write-Host "further options"
@@ -214,7 +214,8 @@ if (
     (
         ($searchFolderPath.Trim().Length -eq 0) -and    # No folder         or
         ($searchFilePath.Trim().Length -eq 0) -and      # No file           or
-        ($searchText.Trim().Length -eq 0)               # No search text    provided
+        (-not $searchText -or $searchText.Count -eq 0)
+        #($searchText.Trim().Length -eq 0)               # No search text    provided
 
     )
 ) {
@@ -229,18 +230,28 @@ if (
 if (-not [string]::IsNullOrWhiteSpace($searchFilePath)) {
     $searchLines = @(Get-Content -Path $searchFilePath)
 }
-if (-not [string]::IsNullOrWhiteSpace($searchText)) {
-    $searchLines += ,$searchText  # So that $searchLines will be an array
+if ($searchText -or $searchText.Count -gt 0) {
+    $searchLines += $searchText  # So that $searchLines will be an array
 }
+# if (-not [string]::IsNullOrWhiteSpace($searchText)) { #saved for later
+#     $searchLines += ,$searchText  # So that $searchLines will be an array
+# }
+
+
+
+
 # if (-not [string]::IsNullOrWhiteSpace($extractMatch)) {
 #     $searchLines += ,$extractMatch  # So that $searchLines will be an array
 # }
 if (-not [string]::IsNullOrWhiteSpace($replaceFilePath)) {
     $replaceLines = @(Get-Content -Path $replaceFilePath)  # Urgent need of arrays: @( )
 }
-if (-not [string]::IsNullOrWhiteSpace($replaceText)) {
-    $replaceLines += ,$replaceText
+if ($replaceText -or $replaceText.Count -gt 0) {
+    $replaceLines += $replaceText
 }
+# if (-not [string]::IsNullOrWhiteSpace($replaceText)) { #saved for later
+#     $replaceLines += ,$replaceText
+# }
 
 # Process the grepping functionality: extracting matches
 if ($extractMatch) { 
