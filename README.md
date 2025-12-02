@@ -91,6 +91,7 @@ All other functional flags are categorized as extended capabilities:
   - Negative values introduce a **delay before execution** (useful for fullscreen applications)
 
 - **Exit requires confirmation** (Terminal stays open) (`-confirm`)
+    - For arbitrary additional peeking time, terminal might be closed after results are evaluated 
 
 - Activate **standard settings** (`-standard`)  
   - Standard file paths: `.\SEARCH.txt` and `.\REPLACE.txt` (used if existent)
