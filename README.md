@@ -69,6 +69,18 @@ All other functional flags are categorized as extended capabilities:
   - Applied **line by line**  
   - **Empty lines = deletions**
 
+- Explicit **search folder** (`-searchFolder <FOLDERNAME>`)  
+  - Applied **file by file** (compatible with `-i` and `-r`)
+  - Only *.txt files are used
+  - Files are used in alphabetical order
+  - Empty files **deprecated**
+
+- Explicit **replace folder** (`-replaceFolder <FOLDERNAME>`)  
+  - Applied **file by file**  
+  - Only *.txt files are used
+  - Files are used in alphabetical order
+  - **Empty files = deletions**
+
 - Can **output to file** instead of clipboard (`-write`)  
   - If no filename is given, a **timestamp** is used  
   - Optional explicit filename via `-saveAs <FILENAME>`
@@ -79,7 +91,8 @@ All other functional flags are categorized as extended capabilities:
 - **Exit requires confirmation** (Terminal stays open) (`-confirm`)
 
 - Activate **standard settings** (`-standard`)  
-  - Standard file paths: `.\SEARCH.txt` and `.\REPLACE.txt`  
+  - Standard file paths: `.\SEARCH.txt` and `.\REPLACE.txt` (used if existent)
+  - Standard folder paths: `.\SEARCH\*.txt` and `.\REPLACE\*.txt` (used if existent, incompatible with `-grep` mode)
   - Corresponding existence is validated and reported
 
 - Display all available flags with `-h` or `-usage`
