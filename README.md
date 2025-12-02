@@ -21,6 +21,8 @@ Below are simple examples demonstrating the essential functionality of the scrip
 # Basic inline search & replace
 # Replaces every occurrence of "foo" with "bar" in the clipboard content.
 clipboardReplace.ps1 -search "foo" -replace "bar"
+# Redacts any given name in the clipboard content.
+clipboardReplace.ps1 -search "Albert Einstein","Erwin Schrödinger","Whitney Houston" -replace "[Redacted Name]","[Redacted Name]","[Redacted Name]"
 
 # Grep-like filtering (no replacement)
 # Keeps only lines that match "pattern" from the clipboard, holds terminal open until confirmation
@@ -34,7 +36,7 @@ clipboardReplace.ps1 -r -i -searchText "foo\d.*bar" -replaceText "baz"
 
 ##  Tip: Run via Keyboard Shortcut (Windows)
 
-For quick access, it's highly recommended to run the script via a **custom keyboard shortcut** in Windows.  
+For quick access - without having to use the command line, it's highly recommended to run the script via a **custom keyboard shortcut** in Windows.  
 You can achieve this easily using a **desktop shortcut** that launches PowerShell with the correct arguments.
 
 ###  Setup Steps
@@ -70,15 +72,15 @@ All other functional flags are categorized as extended capabilities:
   - **Empty lines = deletions**
 
 - Explicit **search folder** (`-searchFolder <FOLDERNAME>`)  
-  - Applied **file by file** (compatible with `-i` and `-r`)
   - Only *.txt files are used
-  - Files are used in alphabetical order
+  - Files are sorted alphabetical prior to usage
+  - Applied **file by file** (compatible with `-i` and `-r`)
   - Empty files **deprecated**
 
 - Explicit **replace folder** (`-replaceFolder <FOLDERNAME>`)  
-  - Applied **file by file**  
   - Only *.txt files are used
-  - Files are used in alphabetical order
+  - Files are sorted alphabetical prior to usage
+  - Applied **file by file**  
   - **Empty files = deletions**
 
 - Can **output to file** instead of clipboard (`-write`)  
@@ -94,6 +96,10 @@ All other functional flags are categorized as extended capabilities:
   - Standard file paths: `.\SEARCH.txt` and `.\REPLACE.txt` (used if existent)
   - Standard folder paths: `.\SEARCH\*.txt` and `.\REPLACE\*.txt` (used if existent, incompatible with `-grep` mode)
   - Corresponding existence is validated and reported
+
+- Repeated application of search & replace in an **endless loop** `-endless`
+    - Optinal timeout for every loop `-loopDelay`
+    - Useful for fullscreen applications
 
 - Display all available flags with `-h` or `-usage`
 
