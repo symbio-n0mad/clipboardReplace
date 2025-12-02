@@ -28,7 +28,11 @@ param (
     [Alias("termOpen", "stay", "windowPersist", "confirm", "p", "c")]          
     [switch]$persist = $false,  
     [Alias("grep", "ext", "e", "x", "extract", "g")]    
-    [switch]$extractMatch
+    [switch]$extractMatch,
+    [Alias("forever", "repeat", "nonstop", "8", "loop", "relentless")]    
+    [switch]$endless,
+    [Alias("repeatDelay", "repeatTimeout", "loopTimeout", "loopWait", "loopSleep")]    
+    [string]$loopDelay
 )
 
 
@@ -136,63 +140,17 @@ function check-Folder {  # Function to check for existence of folder and for fil
     return $true
 }
 
-function replaceFolderWise() {
 
-    if (-not [string]::IsNullOrWhiteSpace($searchFolderPath)) {
-        if (-not (check-folder -Path $searchFolderPath -Strict)) {
-            "Folder check failed, path non-existent or files empty"
-        }
-        else {
-            #"Folder check successfull"
-        }
-        if (-not (check-folder -Path $replaceFolderPath)) {
-            "Folder check failed, path non-existent"
-        }
-        else {
-            #"Folder check successfull"
-        }
-    }
-
-    $searchFiles = Get-ChildItem -Path $searchFolderPath -Filter *.txt | Sort-Object Name
-    $replaceFiles = Get-ChildItem -Path $replaceFolderPath -Filter *.txt | Sort-Object Name
-
-
-    # Check if the number of files in both folders matches
-    if ($searchFiles.Count -ne $replaceFiles.Count) {
-        Write-Error "The number of .txt-files in the SEARCH and REPLACE folders does not match."
-        exit
-    }
-    for ($i = 0; $i -lt $searchFiles.Count; $i++) {
-        # Lese den Inhalt der aktuellen Dateien
-        $searchContent = Get-Content -Path $searchFiles[$i].FullName -Raw
-        $replaceContent = Get-Content -Path $replaceFiles[$i].FullName -Raw
-        if ($ci) { 
-            if ($r) {
-                 $searchContent = $searchContent
-            }
-            else {
-                $searchContent = '(?i)' + [regex]::Escape($searchContent)
-            }
-        }
-        else{
-            if ($r) {
-                $searchContent = $searchContent
-            }
-            else {
-                $searchContent = [regex]::Escape($searchContent)
-            }
-        }
-        # Ersetze den Inhalt in der clipboardText (case-sensitive)
-        #$clipboardText = [regex]::Replace($clipboardText, [regex]::Escape($searchContent), $replaceContent)
-        $clipboardText = [regex]::Replace($clipboardText, $searchContent, $replaceContent)
-    }
-}
+#PROGRAM STARTS HERE
 
 if ($timeout.Contains("-")) {  # Negative values will yield waiting time at program start
     wait-Timeout
     $timeout = "0"
 }
 
+
+do {
+    
 # Read text from clipboard
 $clipboardText = Get-Clipboard
 $clipboardUnchanged = $clipboardText
@@ -340,7 +298,9 @@ else {
     #$searchLines = @($searchText)
 }
 
-# Process line by line
+
+
+#searchAndReplace part by part
 if ($null -ne $replaceLines -and $replaceLines.Count -gt 0 -and $null -ne $searchLines -and $searchLines.Count -gt 0) {  # Only runs if search/replaceLines-Array is existing and has content
     if ($r) {
         for ($i = 0; $i -lt $searchLines.Count; $i++) {
@@ -384,21 +344,63 @@ if ($null -ne $replaceLines -and $replaceLines.Count -gt 0 -and $null -ne $searc
                     #$clipboardText = $clipboardText.Replace($searchForText, $replaceText)
                 }
                 else {
-                   #  #$clipboardText = $clipboardText.Replace($searchForText, $replaceText, [System.StringComparison]::Ordinal) # Not working, meethod is not overloaded
-                   $clipboardText = $clipboardText.Replace($searchForText, $replaceText)
+                #  #$clipboardText = $clipboardText.Replace($searchForText, $replaceText, [System.StringComparison]::Ordinal) # Not working, meethod is not overloaded
+                $clipboardText = $clipboardText.Replace($searchForText, $replaceText)
                 }
             }
         }
     }
 }
 
+#Search and replace folderwise
+if (-not [string]::IsNullOrWhiteSpace($searchFolderPath)) {
+    if (-not (check-folder -Path $searchFolderPath -Strict)) {
+        "Folder check failed, path non-existent or files empty"
+    }
+    else {
+        #"Folder check successfull"
+    }
+    if (-not (check-folder -Path $replaceFolderPath)) {
+        "Folder check failed, path non-existent"
+    }
+    else {
+        #"Folder check successfull"
+    }
+}
+
+$searchFiles = Get-ChildItem -Path $searchFolderPath -Filter *.txt | Sort-Object Name
+$replaceFiles = Get-ChildItem -Path $replaceFolderPath -Filter *.txt | Sort-Object Name
 
 
-
-
-replaceFolderWise # SOLLTE KLAPPEN ABER ORDNER UND DATEI CHECKS SOWIE IF ABFRAGE FUER ENTSPR OPTIONEN FEHLEN KOMPLETT
-
-
+# Check if the number of files in both folders matches
+if ($searchFiles.Count -ne $replaceFiles.Count) {
+    Write-Error "The number of .txt-files in the SEARCH and REPLACE folders does not match."
+    exit
+}
+for ($i = 0; $i -lt $searchFiles.Count; $i++) {
+    # Lese den Inhalt der aktuellen Dateien
+    $searchContent = Get-Content -Path $searchFiles[$i].FullName -Raw
+    $replaceContent = Get-Content -Path $replaceFiles[$i].FullName -Raw
+    if ($ci) { 
+        if ($r) {
+                $searchContent = $searchContent
+        }
+        else {
+            $searchContent = '(?i)' + [regex]::Escape($searchContent)
+        }
+    }
+    else{
+        if ($r) {
+            $searchContent = $searchContent
+        }
+        else {
+            $searchContent = [regex]::Escape($searchContent)
+        }
+    }
+    # Ersetze den Inhalt in der clipboardText (case-sensitive)
+    #$clipboardText = [regex]::Replace($clipboardText, [regex]::Escape($searchContent), $replaceContent)
+    $clipboardText = [regex]::Replace($clipboardText, $searchContent, $replaceContent)
+}
 
 
 if ($fileOutput) { # This runs if output as file is desired, therefore needs to be called at the end
@@ -430,6 +432,10 @@ else {  # Else = no file output? -> then set clipboard content (only if it chang
         Write-Host 'Clipboard text has not changed.'
     }
 }
+
+    wait-Timeout(([int]([math]::Round(([double]($loopDelay -replace ',','.') * 1000)))))
+} until (-not $endless)
+
 
 check-Confirmation
 wait-Timeout
