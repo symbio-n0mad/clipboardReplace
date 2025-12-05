@@ -1,4 +1,4 @@
-# clipboardReplace.ps1
+# clipGre.ps1
 
 A lightweight PowerShell script for **search or search & replace operations** directly on your **clipboard content**.
 
@@ -20,17 +20,17 @@ Below are simple examples demonstrating the essential functionality of the scrip
 ```powershell
 # Basic inline search & replace
 # Replaces every occurrence of "foo" with "bar" in the clipboard content.
-clipboardReplace.ps1 -search "foo" -replace "bar"
+clipGre.ps1 -search "foo" -replace "bar"
 # Redacts any given name in the clipboard content.
-clipboardReplace.ps1 -search "Albert Einstein","Erwin Schrödinger","Whitney Houston" -replace "[Redacted Name]","[Redacted Name]","[Redacted Name]"
+clipGre.ps1 -search "Albert Einstein","Erwin Schrödinger","Whitney Houston" -replace "[Redacted Name]","[Redacted Name]","[Redacted Name]"
 
 # Grep-like filtering (no replacement)
 # Keeps only lines that match "pattern" from the clipboard, holds terminal open until confirmation
-clipboardReplace.ps1 -grep -searchText "pattern" -confirm
+clipGre.ps1 -grep -searchText "pattern" -confirm
 
 # RegEx + case-insensitive replacement
 # Finds "foo...bar" regardless of case, and replaces the entire match with "baz".
-clipboardReplace.ps1 -r -i -searchText "foo\d.*bar" -replaceText "baz"
+clipGre.ps1 -r -i -searchText "foo\d.*bar" -replaceText "baz"
 
 ```
 
@@ -45,7 +45,7 @@ You can achieve this easily using a **desktop shortcut** that launches PowerShel
    - Right-click on your desktop → **New → Shortcut**  
    - For the location, enter something like:
      ```powershell
-     powershell.exe -ExecutionPolicy Bypass -File "C:\Path\To\clipboardReplace.ps1" -r -i -searchText "foo.*bar" -replaceText "baz"
+     powershell.exe -ExecutionPolicy Bypass -File "C:\Path\To\cclipGre.ps1" -r -i -searchText "foo.*bar" -replaceText "baz"
      ```
      >  `-ExecutionPolicy Bypass` ensures the script runs without restrictions, even if PowerShell’s default policy is limited.
 
@@ -55,7 +55,7 @@ You can achieve this easily using a **desktop shortcut** that launches PowerShel
    - Click **Apply** or **OK**
 
 3. **Use It**
-   - Now you can simply press your shortcut to run `clipboardReplace.ps1` instantly — perfect for quick routine clipboard transformations or grep-style searches on the fly.
+   - Now you can simply press your shortcut to run `clipGre.ps1` instantly — perfect for quick routine clipboard transformations or grep-style searches on the fly.
 ---
 
 
