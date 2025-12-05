@@ -22,7 +22,7 @@ Below are simple examples demonstrating the essential functionality of the scrip
 # Basic inline search & replace
 # Replaces every occurrence of "foo" with "bar" in the clipboard content.
 clipGre.ps1 -search "foo" -replace "bar"
-# Redacts any given name in the clipboard content.
+# Accepts arrays as search/replace strings, e.g. redacting names
 clipGre.ps1 -search "Albert Einstein","Erwin Schrödinger","Whitney Houston" -replace "[Redacted Name]","[Redacted Name]","[Redacted Name]"
 
 # Grep-like filtering (no replacement)
@@ -35,7 +35,7 @@ clipGre.ps1 -r -i -searchText "foo\d.*bar" -replaceText "baz"
 
 ```
 
-##  Tip: Run via Keyboard Shortcut (Windows)
+##  GUI Tip: Run via Keyboard Shortcut (Windows)
 
 For quick access - without having to use the command line, it's highly recommended to run the script via a **custom keyboard shortcut** in Windows.  
 You can achieve this easily using a **desktop shortcut** that launches PowerShell with the correct arguments.
