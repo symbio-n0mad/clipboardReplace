@@ -51,6 +51,26 @@ function check-Confirmation() {
     }
 }
 
+function writeFile([string]$content) {
+  # Timestamp generation
+    $timeStamp = Get-Date -Format "yyyyMMdd_HHmmss"
+
+    # Check, for content of $fileName
+    if ([string]::IsNullOrWhiteSpace($fileName)) {
+        # empty -> use generic name
+        $fileName = "Output_$timeStamp.txt"
+    } else {
+        # Name provided? ok then use it!
+        $extension = [System.IO.Path]::GetExtension($fileName)
+        $baseName = [System.IO.Path]::GetFileNameWithoutExtension($fileName)
+        $fileName = "${baseName}_$timeStamp$extension"
+    }
+
+    # Save file
+    $content | Out-File -FilePath $fileName -Encoding UTF8
+    Write-Output "Results saved in file: $fileName"
+}
+
 
 function set-Standard() {  # Set standard preferences (file/folder names) if applicable (dependant of existence)
     # Standard paths
@@ -148,24 +168,6 @@ if ($timeout.Contains("-")) {  # Negative values will yield waiting time at prog
     $timeout = "0"
 }
 
-
-do {
-    
-# Read text from clipboard
-$clipboardText = Get-Clipboard
-$clipboardUnchanged = $clipboardText
-
-if ([string]::IsNullOrWhiteSpace($clipboardText)) {
-    Write-Output "No clipboard available. Nothing to do!"
-    Write-Error "No clipboard available. Nothing to do!"
-    exit
-}
-
-# Apply standard settings if user wishes to do so
-if ($standardSettings) {
-    set-Standard
-}
-
 # Show help text if desired, then exit
 if (
     $Help.IsPresent -or  # Help flag provided or
@@ -184,6 +186,24 @@ if (
     exit
 }
 
+# Apply standard settings if user wishes to do so
+if ($standardSettings) {
+    set-Standard
+}
+
+do { # (Endless) loop start
+    
+# Read text from clipboard
+$clipboardText = Get-Clipboard
+$clipboardUnchanged = $clipboardText
+
+if ([string]::IsNullOrWhiteSpace($clipboardText)) {
+    Write-Output "No clipboard available. Nothing to do!"
+    Write-Error "No clipboard available. Nothing to do!"
+    exit
+}
+
+
 # Read file contents explicitly as arrays, but only if they exist
 if (-not [string]::IsNullOrWhiteSpace($searchFilePath)) {
     $searchLines = @(Get-Content -Path $searchFilePath)
@@ -194,8 +214,6 @@ if ($searchText -or $searchText.Count -gt 0) {
 # if (-not [string]::IsNullOrWhiteSpace($searchText)) { #saved for later
 #     $searchLines += ,$searchText  # So that $searchLines will be an array
 # }
-
-
 
 
 # if (-not [string]::IsNullOrWhiteSpace($extractMatch)) {
@@ -231,9 +249,11 @@ if ($extractMatch) {
                 if ($r) {
                     # Regex-search
                     foreach ($m in [regex]::Matches($line, $pattern)) {
-                        Write-Output "${lineNumber}: $($m.Value)"  # Match 
-                        Write-Output "${lineNumber}: $line"        # Full line
-                        Write-Output ""                            # empty line/CRLF
+                        Write-Host "${lineNumber}: " -NoNewline -ForegroundColor Yellow
+                        Write-Host "$($m.Value)"  -ForegroundColor Red  # Match 
+                        Write-Host "${lineNumber}:" -NoNewline -ForegroundColor Yellow
+                        Write-Host "$line"        # Full line
+                        Write-Host ""                            # empty line/CRLF
                         $matchCount++
                     }
                 } else {
@@ -241,9 +261,11 @@ if ($extractMatch) {
                     foreach ($m in [regex]::Matches($line, $escpattern)) {
                     # if ($line -like "*$pattern*") {
                         #Write-Output "${lineNumber}: $pattern"    # Match 
-                        Write-Output "${lineNumber}: $($m.Value)"  # Match
-                        Write-Output "${lineNumber}: $line"       # Full line
-                        Write-Output ""                           # CRLF
+                        Write-Host "${lineNumber}: " -NoNewline -ForegroundColor Yellow
+                        Write-Host "$($m.Value)"  -ForegroundColor Red  # Match 
+                        Write-Host "${lineNumber}:" -NoNewline -ForegroundColor Yellow
+                        Write-Host "$line"        # Full line
+                        Write-Host ""                            # empty line/CRLF
                         $matchCount++
                     }
                 }
@@ -252,19 +274,22 @@ if ($extractMatch) {
                 if ($r) {
                     # Regex-search (case-sensitive)
                     foreach ($m in [regex]::Matches($line, $pattern, [System.Text.RegularExpressions.RegexOptions]::None)) {
-                        Write-Output "${lineNumber}: $($m.Value)"  # Match 
-                        Write-Output "${lineNumber}: $line"        # Full line
-                        Write-Output ""                            # empty line/CRLF
+                        Write-Host "${lineNumber}: " -NoNewline -ForegroundColor Yellow
+                        Write-Host "$($m.Value)"  -ForegroundColor Red  # Match 
+                        Write-Host "${lineNumber}:" -NoNewline -ForegroundColor Yellow
+                        Write-Host "$line"        # Full line
+                        Write-Host ""                            # empty line/CRLF
                         $matchCount++
                     }
                 } else {
                     # Literal search (case-sensitive)
                     foreach ($m in [regex]::Matches($line, $escpattern, [System.Text.RegularExpressions.RegexOptions]::None)) {
                     #if ($line.Contains($pattern)) {
-                        Write-Output "${lineNumber}: $($m.Value)"  # Match 
-                        #Write-Output "${lineNumber}: $pattern"    # Match 
-                        Write-Output "${lineNumber}: $line"       # Full line
-                        Write-Output ""                           # CRLF
+                        Write-Host "${lineNumber}: " -NoNewline -ForegroundColor Yellow
+                        Write-Host "$($m.Value)"  -ForegroundColor Red  # Match 
+                        Write-Host "${lineNumber}:" -NoNewline -ForegroundColor Yellow
+                        Write-Host "$line"        # Full line
+                        Write-Host ""                            # empty line/CRLF
                         $matchCount++
                     }
                 }
@@ -275,8 +300,12 @@ if ($extractMatch) {
         Write-Output "No matches at all"
     }
     else {
-        Write-Output "Count of all matches is $matchCount"
+        Write-Host "Count of all matches is " -NoNewline
+        Write-Host " $matchCount " -ForegroundColor Green -BackgroundColor DarkRed
     }
+    check-Confirmation
+    wait-Timeout
+    exit
 }
 
 # if ($searchLines.Count -ne $replaceLines.Count) {
@@ -403,37 +432,22 @@ for ($i = 0; $i -lt $searchFiles.Count; $i++) {
 }
 
 
-if ($fileOutput) { # This runs if output as file is desired, therefore needs to be called at the end
-    # Timestamp generation
-    $timeStamp = Get-Date -Format "yyyyMMdd_HHmmss"
-
-    # Check, for content of $fileName
-    if ([string]::IsNullOrWhiteSpace($fileName)) {
-        # empty -> use generic name
-        $fileName = "Output_$timeStamp.txt"
-    } else {
-        # Name provided? ok then use it!
-        $extension = [System.IO.Path]::GetExtension($fileName)
-        $baseName = [System.IO.Path]::GetFileNameWithoutExtension($fileName)
-        $fileName = "${baseName}_$timeStamp$extension"
+if ( [String]::CompareOrdinal($clipboardUnchanged, $clipboardText) -ne 0 ){ #byte by byte comparision seems to help here - it works!
+    if ($fileOutput) { # This runs if output as file is desired, therefore needs to be called at the end
+        writeFile($clipboardText)
     }
-
-    # Save file
-    $clipboardText | Out-File -FilePath $fileName -Encoding UTF8
-    Write-Output "Results saved in file: $fileName"
-}
-else {  # Else = no file output? -> then set clipboard content (only if it changed)
-    if ( [String]::CompareOrdinal($clipboardUnchanged, $clipboardText) -ne 0 ){ #byte by byte comparision seems to help here - it works!
+    else {  # Else = no file output? -> then set clipboard content
         # (Get-Clipboard -Raw)
         Set-Clipboard -Value $clipboardText
         Write-Host 'Clipboard successfully modified.'
     }
-    else {
-        Write-Host 'Clipboard text has not changed.'
-    }
+}
+else {
+    Write-Host 'Clipboard text has not changed.'
 }
 
-    wait-Timeout(([int]([math]::Round(([double]($loopDelay -replace ',','.') * 1000)))))
+
+wait-Timeout(([int]([math]::Round(([double]($loopDelay -replace ',','.') * 1000)))))
 } until (-not $endless)
 
 
