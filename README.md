@@ -1,6 +1,7 @@
-# clipGre.ps1
+# clipGreps: Clipboard Grep and Replace
+## clipGre.ps1
 
-A lightweight PowerShell script for **search or search & replace operations** directly on your **clipboard content**.
+A lightweight PowerShell script for **filter** or **search & replace operations** directly on your **clipboard content**.
 
 ---
 
