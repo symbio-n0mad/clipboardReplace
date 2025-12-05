@@ -15,7 +15,7 @@ param (
     [string]$timeout = "0",
     [Alias("showHelp", "h", "hint", "usage")]          
     [switch]$Help = $false,
-    [Alias("caseInsensitive", "caseMattersNot", "ignoreCase", "ic", "i")]          
+    [Alias("caseInsensitive", "caseMattersNot", "ignoreCase", "ic", "noCase")]          
     [switch]$ci = $false,
     [Alias("toFile", "f", "save", "write", "w", "fileOut", "toOutput")]          
     [switch]$fileOutput = $false,
@@ -168,6 +168,11 @@ if ($timeout.Contains("-")) {  # Negative values will yield waiting time at prog
     $timeout = "0"
 }
 
+# Apply standard settings if user wishes to do so
+if ($standardSettings) {
+    set-Standard
+}
+
 # Show help text if desired, then exit
 if (
     $Help.IsPresent -or  # Help flag provided or
@@ -186,20 +191,15 @@ if (
     exit
 }
 
-# Apply standard settings if user wishes to do so
-if ($standardSettings) {
-    set-Standard
-}
 
 do { # (Endless) loop start
     
 # Read text from clipboard
-$clipboardText = Get-Clipboard
+$clipboardText = Get-Clipboard -Raw
 $clipboardUnchanged = $clipboardText
 
 if ([string]::IsNullOrWhiteSpace($clipboardText)) {
     Write-Output "No clipboard available. Nothing to do!"
-    Write-Error "No clipboard available. Nothing to do!"
     exit
 }
 
@@ -231,9 +231,15 @@ if ($replaceText -or $replaceText.Count -gt 0) {
 
 # Process the grepping functionality: extracting matches
 if ($extractMatch) { 
+    $opt =  if ($ci) {
+                [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+            } else {
+                [System.Text.RegularExpressions.RegexOptions]::None
+            }
     # Match extraction: extract matches
     #### Printing line nr of match, match itself, CRLF, full line, CRLF ###
     # Define search string as empty variable
+    $textOut = New-Object System.Text.StringBuilder
     $matchCount = 0
     $pattern = ""
     # Text splitting to lines
@@ -242,23 +248,31 @@ if ($extractMatch) {
         $pattern = $searchLines[$j]
         $escpattern = [regex]::Escape($pattern)
         # Iterate lines
+        #$escpattern = [regex]::Escape($pattern)
+        # Iterate lines
         for ($i = 0; $i -lt $lines.Length; $i++) {
             $lineNumber = $i + 1
             $line = $lines[$i]
             if ($ci) {
                 if ($r) {
                     # Regex-search
-                    foreach ($m in [regex]::Matches($line, $pattern)) {
+                    #Write-Host $line
+                    #Write-Host $pattern
+                    foreach ($m in [regex]::Matches($line, $pattern, $opt)) {
+                        #Write-Host test
                         Write-Host "${lineNumber}: " -NoNewline -ForegroundColor Yellow
                         Write-Host "$($m.Value)"  -ForegroundColor Red  # Match 
                         Write-Host "${lineNumber}:" -NoNewline -ForegroundColor Yellow
                         Write-Host "$line"        # Full line
                         Write-Host ""                            # empty line/CRLF
+                        $null = $textOut.AppendLine("${lineNumber}: $($m.Value)")  # do not output to console but to $null
+                        $null = $textOut.AppendLine("${lineNumber}: $line")  # do not output to console but to $null
+                        $null = $textOut.AppendLine("")  # empty line/CRLF 
                         $matchCount++
                     }
                 } else {
                     # Literal search
-                    foreach ($m in [regex]::Matches($line, $escpattern)) {
+                    foreach ($m in [regex]::Matches($line, $escpattern, $opt)) {
                     # if ($line -like "*$pattern*") {
                         #Write-Output "${lineNumber}: $pattern"    # Match 
                         Write-Host "${lineNumber}: " -NoNewline -ForegroundColor Yellow
@@ -266,6 +280,9 @@ if ($extractMatch) {
                         Write-Host "${lineNumber}:" -NoNewline -ForegroundColor Yellow
                         Write-Host "$line"        # Full line
                         Write-Host ""                            # empty line/CRLF
+                        $null = $textOut.AppendLine("${lineNumber}: $($m.Value)")  # do not output to console but to $null
+                        $null = $textOut.AppendLine("${lineNumber}: $line") #  do not output to console but to $null
+                        $null = $textOut.AppendLine("")  # empty line/CRLF 
                         $matchCount++
                     }
                 }
@@ -273,23 +290,29 @@ if ($extractMatch) {
             else {
                 if ($r) {
                     # Regex-search (case-sensitive)
-                    foreach ($m in [regex]::Matches($line, $pattern, [System.Text.RegularExpressions.RegexOptions]::None)) {
+                    foreach ($m in [regex]::Matches($line, $pattern, $opt)) {
                         Write-Host "${lineNumber}: " -NoNewline -ForegroundColor Yellow
                         Write-Host "$($m.Value)"  -ForegroundColor Red  # Match 
                         Write-Host "${lineNumber}:" -NoNewline -ForegroundColor Yellow
                         Write-Host "$line"        # Full line
                         Write-Host ""                            # empty line/CRLF
+                        $null = $textOut.AppendLine("${lineNumber}: $($m.Value)") #  do not output to console but to $null
+                        $null = $textOut.AppendLine("${lineNumber}: $line") #  do not output to console but to $null
+                        $null = $textOut.AppendLine("")  # empty line/CRLF 
                         $matchCount++
                     }
                 } else {
                     # Literal search (case-sensitive)
-                    foreach ($m in [regex]::Matches($line, $escpattern, [System.Text.RegularExpressions.RegexOptions]::None)) {
+                    foreach ($m in [regex]::Matches($line, $escpattern, $opt)) {
                     #if ($line.Contains($pattern)) {
                         Write-Host "${lineNumber}: " -NoNewline -ForegroundColor Yellow
                         Write-Host "$($m.Value)"  -ForegroundColor Red  # Match 
                         Write-Host "${lineNumber}:" -NoNewline -ForegroundColor Yellow
                         Write-Host "$line"        # Full line
                         Write-Host ""                            # empty line/CRLF
+                        $null = $textOut.AppendLine("${lineNumber}: $($m.Value)")  # do not output to console but to $null
+                        $null = $textOut.AppendLine("${lineNumber}: $line") #  do not output to console but to $null
+                        $null = $textOut.AppendLine("")  # empty line/CRLF 
                         $matchCount++
                     }
                 }
@@ -302,6 +325,9 @@ if ($extractMatch) {
     else {
         Write-Host "Count of all matches is " -NoNewline
         Write-Host " $matchCount " -ForegroundColor Green -BackgroundColor DarkRed
+        if ($fileOutput) {
+            writeFile($textOut.ToString())
+        }
     }
     check-Confirmation
     wait-Timeout
